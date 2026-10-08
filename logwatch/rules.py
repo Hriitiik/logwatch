@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -165,7 +166,7 @@ def login_after_failures(events, min_failures=5, window=60):
     return alerts
 
 
-# info for reference
+# info for auth reference
 # "ts": ts,
 # "source": "auth",
 # "ip": m["ip"],
@@ -174,3 +175,103 @@ def login_after_failures(events, min_failures=5, window=60):
 # "status": None,
 # "path": None,
 # "ua": None
+
+# possible patterns for web injection
+SQL_PATTERNS = [
+    r"'\s*(or|and)\s+",
+    r"\bunion\s+select\b",
+    r"\bselect\b.+\bfrom\b",
+    r"--",
+    r"/\*",
+]
+
+XSS_PATTERNS = [
+    r"<script",
+    r"javascript:",
+    r"onerror\s*=",
+    r"onload\s*=",
+    r"<svg",
+    r"<img",
+    r"alert\s*\(",
+]
+
+TRAVERSAL_PATTERNS = [
+    r"\.\./",
+    r"\.\.\\",
+    r"/etc/passwd",
+    r"/etc/shadow",
+]
+
+COMMAND_PATTERNS = [
+    r";\s*(whoami|id|cat|curl|wget|nc)\b",
+    r"\$\(",
+    r"`[^`]+`",
+]
+
+
+def web_injection_probes(events):
+    alerts = []
+    for event in events:
+        path = event["path"]
+        # searching for different possible patterns in path
+        if any(re.search(pattern, path, re.IGNORECASE) for pattern in SQL_PATTERNS):
+            alerts.append(
+                Alert(
+                    rule="web_injection_probes",
+                    severity="medium",
+                    attack_id="T1595.002",
+                    ip=event["ip"],
+                    ts=event["ts"],
+                    detail="Detected possible SQL Injection Pattern in url",
+                )
+            )
+
+        elif any(re.search(pattern, path, re.IGNORECASE) for pattern in XSS_PATTERNS):
+            alerts.append(
+                Alert(
+                    rule="web_injection_probes",
+                    severity="medium",
+                    attack_id="T1595.002",
+                    ip=event["ip"],
+                    ts=event["ts"],
+                    detail="Detected possible XSS Pattern in url",
+                )
+            )
+        elif any(
+            re.search(pattern, path, re.IGNORECASE) for pattern in TRAVERSAL_PATTERNS
+        ):
+            alerts.append(
+                Alert(
+                    rule="web_injection_probes",
+                    severity="medium",
+                    attack_id="T1595.002",
+                    ip=event["ip"],
+                    ts=event["ts"],
+                    detail="Detected possible Path Traversal Pattern in url",
+                )
+            )
+        elif any(
+            re.search(pattern, path, re.IGNORECASE) for pattern in COMMAND_PATTERNS
+        ):
+            alerts.append(
+                Alert(
+                    rule="web_injection_probes",
+                    severity="medium",
+                    attack_id="T1595.002",
+                    ip=event["ip"],
+                    ts=event["ts"],
+                    detail="Detected possible Command Injection Pattern in url",
+                )
+            )
+    return alerts
+
+
+# info for web references
+# "ts": ts,
+# "source": "web",
+# "ip": m["ip"],
+# "user": None,
+# "event": "web_request",
+# "status": int(m["status"]),
+# "path": unquote_plus(m["path"]),
+# "ua": m["ua"],

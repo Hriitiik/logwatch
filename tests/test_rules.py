@@ -110,3 +110,88 @@ def test_login_after_failures_not_detected():
     events += [fail("1.1.1.1", secs=59, event="successful_login")]
     alerts = rules.login_after_failures(events)
     assert len(alerts) == 0
+
+
+def test_web_injection_prob_sqli():
+    events = [
+        {
+            "ts": datetime(2026, 10, 8, 10, 15, 1, tzinfo=timezone.utc),
+            "source": "web",
+            "ip": "192.168.1.50",
+            "user": None,
+            "event": "web_request",
+            "status": 200,
+            "path": "/products?id=1' OR 1=1--",
+            "ua": "Mozilla/5.0",
+        }
+    ]
+    alerts = rules.web_injection_probes(events)
+    assert alerts[0].detail == "Detected possible SQL Injection Pattern in url"
+
+
+def test_web_injection_prob_xss():
+    event = [
+        {
+            "ts": datetime(2026, 10, 8, 10, 16, 22, tzinfo=timezone.utc),
+            "source": "web",
+            "ip": "192.168.1.51",
+            "user": None,
+            "event": "web_request",
+            "status": 200,
+            "path": "/search?q=<script>alert(1)</script>",
+            "ua": "Mozilla/5.0",
+        }
+    ]
+    alerts = rules.web_injection_probes(event)
+    assert alerts[0].detail == "Detected possible XSS Pattern in url"
+
+
+def test_web_injection_prob_path_traversal():
+    event = [
+        {
+            "ts": datetime(2026, 10, 8, 10, 17, 43, tzinfo=timezone.utc),
+            "source": "web",
+            "ip": "192.168.1.52",
+            "user": None,
+            "event": "web_request",
+            "status": 404,
+            "path": "/download?file=../../../etc/passwd",
+            "ua": "Mozilla/5.0",
+        }
+    ]
+    alerts = rules.web_injection_probes(event)
+    assert alerts[0].detail == "Detected possible Path Traversal Pattern in url"
+
+
+def test_web_injection_prob_command_injection():
+    event = [
+        {
+            "ts": datetime(2026, 10, 8, 10, 18, 55, tzinfo=timezone.utc),
+            "source": "web",
+            "ip": "192.168.1.53",
+            "user": None,
+            "event": "web_request",
+            "status": 200,
+            "path": "/ping?host=127.0.0.1;whoami",
+            "ua": "Mozilla/5.0",
+        },
+    ]
+    alerts = rules.web_injection_probes(event)
+    assert alerts[0].detail == "Detected possible Command Injection Pattern in url"
+
+
+def test_web_injection_prob_normal():
+    event = [
+        {
+            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=timezone.utc),
+            "source": "web",
+            "ip": "10.0.0.25",
+            "user": None,
+            "event": "web_request",
+            "status": 200,
+            "path": "/products?id=123",
+            "ua": "Mozilla/5.0",
+        }
+    ]
+    alerts = rules.web_injection_probes(event)
+    assert len(alerts) == 0
