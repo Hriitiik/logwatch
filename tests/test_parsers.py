@@ -11,14 +11,14 @@ def test_failed_login():
     assert e["user"] == "root"
 
 
+def test_garbage_returns_none():
+    assert parsers.parse_auth_line("not a log line", 2026) is None
+
+
 def test_events_detected():
     path = Path(__file__).parent.parent / "samples" / "auth.log"
     events = parsers.parse_auth_file(path)
     assert len(events) == 3
-
-
-def test_garbage_returns_none():
-    assert parsers.parse_auth_line("not a log line", 2026) is None
 
 
 def test_web_parser():
@@ -36,3 +36,9 @@ def test_web_url_decoded():
 
 def test_web_garbage():
     assert parsers.parse_web_line("this is not a log line") is None
+
+
+def test_web_logs_detected():
+    path = Path(__file__).parent.parent / "samples" / "access.log"
+    events = parsers.parse_web_file(path)
+    assert len(events) == 3

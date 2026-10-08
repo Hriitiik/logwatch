@@ -64,3 +64,13 @@ def parse_web_line(line):
         "path": unquote_plus(m["path"]),
         "ua": m["ua"],
     }
+
+
+def parse_web_file(path):
+    events = []
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            e = parse_web_line(line.rstrip("\n"))
+            if e:
+                events.append(e)
+    return events
