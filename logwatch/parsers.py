@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timezone
+from urllib.parse import unquote_plus
 
 AUTH_RE = re.compile(
     r"^(?P<mon>\w{3})\s+(?P<day>\d+)\s+(?P<time>[\d:]+)\s+\S+\s+sshd\[\d+\]:\s+"
@@ -36,3 +37,30 @@ def parse_auth_file(path, year=None):
             if e:
                 events.append(e)
     return events
+
+
+WEB_RE = re.compile(
+    r"^(?P<ip>[\d.]+) \S+ \S+ \[(?P<ts>[^\]]+)\] "
+    r'"(?P<method>\S+) (?P<path>\S+) [^"]*" (?P<status>\d{3}) \S+ '
+    r'"[^"]*" "(?P<ua>[^"]*)"'
+)
+
+
+def parse_web_line(line):
+    m = WEB_RE.match(line)
+    if not m:
+        return None
+    try:
+        ts = datetime.strptime(m["ts"], "%d/%b/%Y:%H:%M:%S %z").astimezone(timezone.utc)
+    except ValueError:
+        return None
+    return {
+        "ts": ts,
+        "source": "web",
+        "ip": m["ip"],
+        "user": None,
+        "event": "web_request",
+        "status": int(m["status"]),
+        "path": unquote_plus(m["path"]),
+        "ua": m["ua"],
+    }
