@@ -129,7 +129,7 @@ def login_after_failures(events, min_failures=5, window=60):
         ip = event["ip"]
         by_ip.setdefault(ip, []).append(event)
 
-    # check each IP
+    # check each ip
     for ip, ip_events in by_ip.items():
         ip_events.sort(key=lambda event: event["ts"])
 
