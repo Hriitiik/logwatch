@@ -76,16 +76,9 @@ def test_ssh_bruteforce_once_per_ip():
 
 
 def test_password_spraying_detected():
-    start = datetime(2026, 10, 4, 12, 0, 0)
 
     events = [
-        {
-            "event": "failed_login",
-            "ip": "192.168.1.10",
-            "user": "user" + str(i),
-            "ts": start + timedelta(seconds=i),
-        }
-        for i in range(10)
+        fail("1.1.1.1", i, user="user" + str(i)) for i in range(10) for i in range(10)
     ]
 
     alerts = rules.password_spraying(events)
@@ -93,22 +86,27 @@ def test_password_spraying_detected():
     assert len(alerts) == 1
     assert alerts[0].rule == "password_spraying"
     assert alerts[0].severity == "high"
-    assert alerts[0].ip == "192.168.1.10"
+    assert alerts[0].ip == "1.1.1.1"
 
 
 def test_password_spraying_same_user_not_detected():
-    start = datetime(2026, 10, 4, 12, 0, 0)
 
-    events = [
-        {
-            "event": "failed_login",
-            "ip": "192.168.1.10",
-            "user": "user",
-            "ts": start + timedelta(seconds=i),
-        }
-        for i in range(10)
-    ]
+    events = [fail("1.1.1.1", i) for i in range(10)]
 
     alerts = rules.password_spraying(events)
 
+    assert len(alerts) == 0
+
+
+def test_login_after_failures():
+    events = [fail("1.1.1.1", i) for i in range(5)]
+    events += [fail("1.1.1.1", secs=59, event="successful_login")]
+    alerts = rules.login_after_failures(events)
+    assert len(alerts) == 1
+
+
+def test_login_after_failures_not_detected():
+    events = [fail("1.1.1.1", i) for i in range(4)]
+    events += [fail("1.1.1.1", secs=59, event="successful_login")]
+    alerts = rules.login_after_failures(events)
     assert len(alerts) == 0
