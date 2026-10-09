@@ -306,3 +306,11 @@ def scanner_user_agents(events):
 # "status": int(m["status"]),
 # "path": unquote_plus(m["path"]),
 # "ua": m["ua"],
+
+RULES = {
+    "ssh_bruteforce": (ssh_bruteforce, "auth"),
+    "password_spraying": (password_spraying, "auth"),
+    "login_after_failures": (login_after_failures, "auth"),
+    "web_injection_probes": (web_injection_probes, "web"),
+    "scanner_user_agents": (scanner_user_agents, "web"),
+}
