@@ -195,3 +195,38 @@ def test_web_injection_prob_normal():
     ]
     alerts = rules.web_injection_probes(event)
     assert len(alerts) == 0
+
+
+def test_scanner_user_agent():
+    event = [
+        {
+            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=timezone.utc),
+            "source": "web",
+            "ip": "10.0.0.25",
+            "user": None,
+            "event": "web_request",
+            "status": 200,
+            "path": "/products?id=123",
+            "ua": "sqlmap/1.8.2",
+        }
+    ]
+    alerts = rules.scanner_user_agents(event)
+    assert len(alerts) == 1
+    assert alerts[0].rule == "scanner_user_agents"
+
+
+def test_normal_user_agent():
+    event = [
+        {
+            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=timezone.utc),
+            "source": "web",
+            "ip": "10.0.0.25",
+            "user": None,
+            "event": "web_request",
+            "status": 200,
+            "path": "/products?id=123",
+            "ua": "Mozilla/5.0",
+        }
+    ]
+    alerts = rules.scanner_user_agents(event)
+    assert len(alerts) == 0

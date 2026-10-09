@@ -266,6 +266,37 @@ def web_injection_probes(events):
     return alerts
 
 
+SCANNER_SIGNATURES = [
+    "sqlmap",
+    "nikto",
+    "nmap",
+    "nuclei",
+    "dirsearch",
+    "gobuster",
+    "ffuf",
+    "zgrab",
+    "wfuzz",
+]
+
+
+def scanner_user_agents(events):
+    alerts = []
+    for event in events:
+        ua = event["ua"] or ""
+        if any(signature in ua.lower() for signature in SCANNER_SIGNATURES):
+            alerts.append(
+                Alert(
+                    rule="scanner_user_agents",
+                    severity="low",
+                    attack_id="T1595",
+                    ip=event["ip"],
+                    ts=event["ts"],
+                    detail=f"Possible scanner detected in user-agent: {ua}",
+                )
+            )
+    return alerts
+
+
 # info for web references
 # "ts": ts,
 # "source": "web",
