@@ -43,7 +43,7 @@ def main(argv=None):
     )
     sev = summary["by_severity"]
     print(
-        f"ALERTS: {summary['total']} (critical: {sev.get('low', 0)} | high: {sev.get('high', 0)} | medium: {sev.get('medium', 0)} | low: {sev.get('low', 0)})\n"
+        f"ALERTS: {summary['total']} (critical: {sev.get('critical', 0)} | high: {sev.get('high', 0)} | medium: {sev.get('medium', 0)} | low: {sev.get('low', 0)})\n"
     )
     for a in alerts:
         print(f"{a.severity.upper():<9} {a.attack_id:<20} {a.ip:<15} {a.detail}")

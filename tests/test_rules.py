@@ -1,8 +1,8 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from logwatch import rules
 
-T0 = datetime(2026, 10, 4, 12, 0, 0, tzinfo=timezone.utc)
+T0 = datetime(2026, 10, 4, 12, 0, 0, tzinfo=UTC)
 
 
 def fail(ip, secs, user="admin", event="failed_login"):
@@ -77,9 +77,7 @@ def test_ssh_bruteforce_once_per_ip():
 
 def test_password_spraying_detected():
 
-    events = [
-        fail("1.1.1.1", i, user="user" + str(i)) for i in range(10) for i in range(10)
-    ]
+    events = [fail("1.1.1.1", i, user="user" + str(i)) for i in range(10)]
 
     alerts = rules.password_spraying(events)
 
@@ -96,6 +94,21 @@ def test_password_spraying_same_user_not_detected():
     alerts = rules.password_spraying(events)
 
     assert len(alerts) == 0
+
+
+def test_four_users_no_alert():
+    events = [fail("1.1.1.1", i, user=f"u{i}") for i in range(4)]
+    assert rules.password_spraying(events) == []
+
+
+def test_five_users_exact_threshold():
+    events = [fail("1.1.1.1", i, user=f"u{i}") for i in range(5)]
+    assert len(rules.password_spraying(events)) == 1
+
+
+def test_users_spread_beyond_window():
+    events = [fail("1.1.1.1", i * 100, user=f"u{i}") for i in range(5)]
+    assert rules.password_spraying(events) == []
 
 
 def test_login_after_failures():
@@ -115,7 +128,7 @@ def test_login_after_failures_not_detected():
 def test_web_injection_prob_sqli():
     events = [
         {
-            "ts": datetime(2026, 10, 8, 10, 15, 1, tzinfo=timezone.utc),
+            "ts": datetime(2026, 10, 8, 10, 15, 1, tzinfo=UTC),
             "source": "web",
             "ip": "192.168.1.50",
             "user": None,
@@ -132,7 +145,7 @@ def test_web_injection_prob_sqli():
 def test_web_injection_prob_xss():
     event = [
         {
-            "ts": datetime(2026, 10, 8, 10, 16, 22, tzinfo=timezone.utc),
+            "ts": datetime(2026, 10, 8, 10, 16, 22, tzinfo=UTC),
             "source": "web",
             "ip": "192.168.1.51",
             "user": None,
@@ -149,7 +162,7 @@ def test_web_injection_prob_xss():
 def test_web_injection_prob_path_traversal():
     event = [
         {
-            "ts": datetime(2026, 10, 8, 10, 17, 43, tzinfo=timezone.utc),
+            "ts": datetime(2026, 10, 8, 10, 17, 43, tzinfo=UTC),
             "source": "web",
             "ip": "192.168.1.52",
             "user": None,
@@ -166,7 +179,7 @@ def test_web_injection_prob_path_traversal():
 def test_web_injection_prob_command_injection():
     event = [
         {
-            "ts": datetime(2026, 10, 8, 10, 18, 55, tzinfo=timezone.utc),
+            "ts": datetime(2026, 10, 8, 10, 18, 55, tzinfo=UTC),
             "source": "web",
             "ip": "192.168.1.53",
             "user": None,
@@ -183,7 +196,7 @@ def test_web_injection_prob_command_injection():
 def test_web_injection_prob_normal():
     event = [
         {
-            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=timezone.utc),
+            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=UTC),
             "source": "web",
             "ip": "10.0.0.25",
             "user": None,
@@ -200,7 +213,7 @@ def test_web_injection_prob_normal():
 def test_scanner_user_agent():
     event = [
         {
-            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=timezone.utc),
+            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=UTC),
             "source": "web",
             "ip": "10.0.0.25",
             "user": None,
@@ -218,7 +231,7 @@ def test_scanner_user_agent():
 def test_normal_user_agent():
     event = [
         {
-            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=timezone.utc),
+            "ts": datetime(2026, 10, 8, 10, 20, 1, tzinfo=UTC),
             "source": "web",
             "ip": "10.0.0.25",
             "user": None,

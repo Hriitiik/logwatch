@@ -72,7 +72,7 @@ def ssh_bruteforce(events, threshold=10, window=60):
     return alerts
 
 
-def password_spraying(events, threshold=7, window=60):
+def password_spraying(events, threshold=5, window=300):
     alerts = []
 
     # failed ssh logins
@@ -119,7 +119,7 @@ def password_spraying(events, threshold=7, window=60):
     return alerts
 
 
-def login_after_failures(events, min_failures=5, window=60):
+def login_after_failures(events, min_failures=5, window=300):
 
     alerts = []
 
@@ -219,7 +219,7 @@ def web_injection_probes(events):
                 Alert(
                     rule="web_injection_probes",
                     severity="medium",
-                    attack_id="T1595.002",
+                    attack_id="T1190",
                     ip=event["ip"],
                     ts=event["ts"],
                     detail="Detected possible SQL Injection Pattern in url",
@@ -231,7 +231,7 @@ def web_injection_probes(events):
                 Alert(
                     rule="web_injection_probes",
                     severity="medium",
-                    attack_id="T1595.002",
+                    attack_id="T1190",
                     ip=event["ip"],
                     ts=event["ts"],
                     detail="Detected possible XSS Pattern in url",
@@ -244,7 +244,7 @@ def web_injection_probes(events):
                 Alert(
                     rule="web_injection_probes",
                     severity="medium",
-                    attack_id="T1595.002",
+                    attack_id="T1190",
                     ip=event["ip"],
                     ts=event["ts"],
                     detail="Detected possible Path Traversal Pattern in url",
@@ -257,7 +257,7 @@ def web_injection_probes(events):
                 Alert(
                     rule="web_injection_probes",
                     severity="medium",
-                    attack_id="T1595.002",
+                    attack_id="T1190",
                     ip=event["ip"],
                     ts=event["ts"],
                     detail="Detected possible Command Injection Pattern in url",

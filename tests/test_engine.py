@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from logwatch import engine
@@ -9,12 +9,12 @@ def test_load_events():
     auth_path = Path(__file__).parent.parent / "samples" / "auth.log"
     web_path = Path(__file__).parent.parent / "samples" / "access.log"
     events = engine.load_events(auth_path, web_path)
-    assert len(events["auth"]) == 3
-    assert len(events["web"]) == 3
+    assert len(events["auth"]) == 176
+    assert len(events["web"]) == 506
 
 
 def test_run_rules():
-    start = datetime(2026, 10, 9, 10, 0, 0, tzinfo=timezone.utc)
+    start = datetime(2026, 10, 9, 10, 0, 0, tzinfo=UTC)
 
     event_by_source = {
         "auth": [
@@ -43,7 +43,7 @@ def test_sorted_alerts_different_severities():
             severity="medium",
             attack_id="T1190",
             ip="192.168.1.20",
-            ts=datetime(2026, 10, 9, 10, 2, tzinfo=timezone.utc),
+            ts=datetime(2026, 10, 9, 10, 2, tzinfo=UTC),
             detail="Possible SQL injection",
         ),
         Alert(
@@ -51,7 +51,7 @@ def test_sorted_alerts_different_severities():
             severity="high",
             attack_id="T1110",
             ip="192.168.1.10",
-            ts=datetime(2026, 10, 9, 10, 1, tzinfo=timezone.utc),
+            ts=datetime(2026, 10, 9, 10, 1, tzinfo=UTC),
             detail="Too many failed logins",
         ),
         Alert(
@@ -59,7 +59,7 @@ def test_sorted_alerts_different_severities():
             severity="critical",
             attack_id="T1078",
             ip="192.168.1.30",
-            ts=datetime(2026, 10, 9, 10, 3, tzinfo=timezone.utc),
+            ts=datetime(2026, 10, 9, 10, 3, tzinfo=UTC),
             detail="Successful login after repeated failures",
         ),
         Alert(
@@ -67,7 +67,7 @@ def test_sorted_alerts_different_severities():
             severity="low",
             attack_id="T1595",
             ip="192.168.1.40",
-            ts=datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc),
+            ts=datetime(2026, 10, 9, 10, 0, tzinfo=UTC),
             detail="Suspicious scanner user agent",
         ),
     ]
@@ -83,7 +83,7 @@ def test_sorted_alerts_same_severity():
             "high",
             "T1110",
             "10.0.0.1",
-            datetime(2026, 10, 9, 10, 5, tzinfo=timezone.utc),
+            datetime(2026, 10, 9, 10, 5, tzinfo=UTC),
             "Later",
         ),
         Alert(
@@ -91,7 +91,7 @@ def test_sorted_alerts_same_severity():
             "high",
             "T1110",
             "10.0.0.2",
-            datetime(2026, 10, 9, 10, 1, tzinfo=timezone.utc),
+            datetime(2026, 10, 9, 10, 1, tzinfo=UTC),
             "Earlier",
         ),
     ]
@@ -109,7 +109,7 @@ def test_summarize():
             "high",
             "T1110",
             "192.168.1.10",
-            datetime(2026, 10, 9, 10, 0, tzinfo=timezone.utc),
+            datetime(2026, 10, 9, 10, 0, tzinfo=UTC),
             "SSH brute force",
         ),
         Alert(
@@ -117,7 +117,7 @@ def test_summarize():
             "high",
             "T1110",
             "192.168.1.10",
-            datetime(2026, 10, 9, 10, 1, tzinfo=timezone.utc),
+            datetime(2026, 10, 9, 10, 1, tzinfo=UTC),
             "SSH brute force",
         ),
         Alert(
@@ -125,7 +125,7 @@ def test_summarize():
             "medium",
             "T1190",
             "192.168.1.20",
-            datetime(2026, 10, 9, 10, 2, tzinfo=timezone.utc),
+            datetime(2026, 10, 9, 10, 2, tzinfo=UTC),
             "SQL injection probe",
         ),
         Alert(
@@ -133,7 +133,7 @@ def test_summarize():
             "critical",
             "T1078",
             "192.168.1.30",
-            datetime(2026, 10, 9, 10, 3, tzinfo=timezone.utc),
+            datetime(2026, 10, 9, 10, 3, tzinfo=UTC),
             "Login after failures",
         ),
     ]
@@ -148,3 +148,18 @@ def test_summarize():
         "login_after_failures": 1,
     }
     assert summary["top_ips"][0] == ("192.168.1.10", 2)
+
+
+def test_demo_samples_exact():
+    SAMPLES = Path(__file__).resolve().parent.parent / "samples"
+    ev = engine.load_events(str(SAMPLES / "auth.log"), str(SAMPLES / "access.log"))
+    alerts = engine.run_rules(ev)
+    assert {(a.rule, a.ip) for a in alerts} == {
+        ("login_after_failures", "203.0.113.5"),
+        ("ssh_bruteforce", "203.0.113.5"),
+        ("password_spraying", "198.51.100.7"),
+        ("web_injection_probes", "192.0.2.9"),
+        ("scanner_user_agents", "192.0.2.10"),
+    }
+    assert len(alerts) == 9
+    assert "192.0.2.50" not in {a.ip for a in alerts}
