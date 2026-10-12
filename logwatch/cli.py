@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from .engine import load_events, run_rules, sort_alerts, summarize
+from .report import alerts_to_json, render_html
 
 SEVERITY_RANK = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 SAMPLES = Path(__file__).resolve().parent.parent / "samples"
@@ -47,6 +48,9 @@ def main(argv=None):
     )
     for a in alerts:
         print(f"{a.severity.upper():<9} {a.attack_id:<20} {a.ip:<15} {a.detail}")
+    alerts_to_json(alerts, args.json_out)
+    render_html(alerts, summary, args.out)
+    print(f"\nWrote {args.out}, {args.json_out}")
 
     if args.fail_on and any(
         SEVERITY_RANK[a.severity] >= SEVERITY_RANK[args.fail_on] for a in alerts
