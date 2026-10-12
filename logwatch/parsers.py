@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import unquote_plus
 
 AUTH_RE = re.compile(
@@ -15,7 +15,7 @@ def parse_auth_line(line, year):
         return None
     ts = datetime.strptime(
         f"{year} {m['mon']} {m['day']} {m['time']}", "%Y %b %d %H:%M:%S"
-    ).replace(tzinfo=timezone.utc)
+    ).replace(tzinfo=UTC)
     return {
         "ts": ts,
         "source": "auth",
@@ -29,7 +29,7 @@ def parse_auth_line(line, year):
 
 
 def parse_auth_file(path, year=None):
-    year = year or datetime.now(timezone.utc).year
+    year = year or datetime.now(UTC).year
     events = []
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -51,7 +51,7 @@ def parse_web_line(line):
     if not m:
         return None
     try:
-        ts = datetime.strptime(m["ts"], "%d/%b/%Y:%H:%M:%S %z").astimezone(timezone.utc)
+        ts = datetime.strptime(m["ts"], "%d/%b/%Y:%H:%M:%S %z").astimezone(UTC)
     except ValueError:
         return None
     return {
