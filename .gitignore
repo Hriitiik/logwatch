@@ -210,3 +210,5 @@ tempCodeRunnerFile.py
 
 # PyPI configuration file
 .pypirc
+ report.html
+ report.json
