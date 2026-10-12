@@ -1,3 +1,6 @@
+ report.html
+ report.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -210,5 +213,3 @@ tempCodeRunnerFile.py
 
 # PyPI configuration file
 .pypirc
- report.html
- report.json
